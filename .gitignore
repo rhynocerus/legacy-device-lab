@@ -1,0 +1,8 @@
+# Local diagnostic captures
+usb-diagnostics-*/
+*.log
+
+# Temporary/editor files
+*~
+*.swp
+.DS_Store
