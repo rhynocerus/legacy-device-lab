@@ -1,0 +1,23 @@
+Sanitized Download Mode excerpt
+Device: Samsung Galaxy Tab E 9.6 SM-T560
+VID:PID: 04e8:685d
+
+usb 1-3: new high-speed USB device number 78 using xhci_hcd
+usb 1-3: New USB device found, idVendor=04e8, idProduct=685d, bcdDevice= 2.1b
+usb 1-3: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+usb 1-3: Product: SAMSUNG USB DRIVER
+usb 1-3: Manufacturer: SAMSUNG
+usb 1-3: USB disconnect, device number 78
+usb 1-3: new high-speed USB device number 79 using xhci_hcd
+usb 1-3: New USB device found, idVendor=04e8, idProduct=685d, bcdDevice= 2.1b
+usb 1-3: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+usb 1-3: Product: SAMSUNG USB DRIVER
+usb 1-3: Manufacturer: SAMSUNG
+
+Additional failed enumeration messages observed during other attempts:
+
+device descriptor read/64, error -71
+device descriptor read/64, error -110
+can't set config #1, error -75
+device not accepting address, error -71
+unable to enumerate USB device
