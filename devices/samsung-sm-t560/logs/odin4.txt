@@ -1,0 +1,18 @@
+Odin4 build and detection notes
+Device: Samsung Galaxy Tab E 9.6 SM-T560
+
+Built version:
+
+odin4 version 7.3.0-a46321b
+
+Build completed successfully:
+
+[26/26] Linking CXX executable odin4
+
+Detection attempt:
+
+sudo ./build/odin4 -l
+No devices detected in Download Mode.
+
+Interpretation at the time of testing:
+Linux was no longer exposing a stable 04e8:685d device by the time Odin4 performed the scan because the tablet had already disconnected or failed re-enumeration.
