@@ -1,0 +1,19 @@
+Sanitized Heimdall excerpt
+Heimdall version: 2.0.2
+Device: Samsung Galaxy Tab E 9.6 SM-T560
+
+Successful detection observed once:
+
+Device detected
+
+Protocol attempt:
+
+Initialising protocol...
+Resetting device...
+ERROR: libusb error -7 whilst sending bulk transfer. Retrying...
+ERROR: libusb error -7 whilst sending bulk transfer.
+ERROR: Failed to send handshake!
+ERROR: Failed to receive handshake response. Result: -7
+ERROR: Protocol initialisation failed!
+
+Earlier verbose descriptor information showed the expected Samsung CDC-style data interface with bulk endpoints 0x81 IN and 0x02 OUT on interface 1.
