@@ -311,6 +311,34 @@ AOSP states that OEMs wishing to boot public Developer GSIs while the bootloader
 
 The next safe step is therefore to determine whether the active `init_boot_b` / `vendor_boot_b` block devices can be read from the unprivileged shell, without writing anything. If they cannot, inspection should move to an official firmware/OTA package or another non-writing acquisition route rather than attempting a BROM or partition-unlock procedure.
 
+## 2026-09-12 — Entry 007: European/EUEX firmware region confirmed
+
+Read-only system properties establish that this phone is not an Indian firmware variant. The installed software identifies itself as:
+
+```text
+ro.product.name=CPH2579EEA
+persist.sys.oplus.region=ES
+ro.oplus.image.my_region.type=EUEX_all
+ro.oplus.image.my_region.version_name=XEU0000
+ro.oplus.pipeline.region=EUEX
+ro.vendor.oplus.regionmark=EUEX
+ro.vendor.oplus.market.name=OPPO A38
+```
+
+The OTA/display identifiers are:
+
+```text
+persist.sys.oplus.ota_ver_display=CPH2579_15.0.0.1900(EX01)
+ro.build.display.ota=CPH2579_11_F.38
+ro.build.version.ota=CPH2579_11.F.38_3380_202607030337
+```
+
+### Interpretation
+
+The appropriate firmware/OTA acquisition target for offline boot-image inspection is therefore the **European EUEX/EEA build**, not an India-region package that happens to share the same public version string.
+
+No firmware package has been flashed or installed. Any firmware located next will be used only as an offline source for `init_boot` / `vendor_boot` inspection unless a separate recovery and flashing plan is established.
+
 ## Decision gate
 
 Do not proceed to bootloader/preloader modification until the DSU path has been exhausted and a recoverability plan exists.
