@@ -339,6 +339,57 @@ The appropriate firmware/OTA acquisition target for offline boot-image inspectio
 
 No firmware package has been flashed or installed. Any firmware located next will be used only as an offline source for `init_boot` / `vendor_boot` inspection unless a separate recovery and flashing plan is established.
 
+## 2026-09-12 — Entry 008: OPPO OTA/update components identified
+
+Read-only package and service inspection found the following update-related packages:
+
+```text
+com.oplus.cota
+com.oplus.sau
+com.oplus.sauhelper
+com.google.android.configupdater
+com.oplus.ota
+com.cota.notification
+com.oplus.upgradeguide
+com.oplus.romupdate
+```
+
+The generic Android `SYSTEM_UPDATE_SETTINGS` action resolves to Google Play Services:
+
+```text
+com.google.android.gms/.update.SystemUpdateActivity
+```
+
+This does not establish which OPPO package handles full ColorOS firmware updates.
+
+`com.oplus.sau` exposes multiple SAU services and activities, including an `oplus.intent.action.SAU_ZIP_UPGRADE_SERVICE` handler. `com.oplus.sauhelper` is installed from `/system_ext/app/SAUHelper`, version `1.15.0`, target SDK 35.
+
+The previous probe accidentally queried `com.oppo.ota`; the installed package is actually `com.oplus.ota`. Therefore component discovery for the real OPPO OTA application remains to be performed.
+
+Protected OTA locations exist but ordinary ADB shell access is denied:
+
+```text
+/data/ota
+/data/ota_package
+/cache
+/data/oplus/os/OTA
+```
+
+No user-visible `/sdcard/.Ota` or `/sdcard/OTA` directory was present.
+
+The Android update framework is active and exposes:
+
+```text
+android.os.UpdateEngineService
+android.os.UpdateEngineStableService
+system_update
+updatelock
+```
+
+### Interpretation
+
+The device includes both the standard A/B UpdateEngine infrastructure and OPPO-specific OTA/SAU components. The next safe step is to inspect `com.oplus.ota` directly and identify its exported activities/services/actions. If possible, a read-only logcat capture can then be made while the stock updater checks for updates, potentially exposing metadata or package references for the EUEX firmware stream without downloading or installing anything.
+
 ## Decision gate
 
 Do not proceed to bootloader/preloader modification until the DSU path has been exhausted and a recoverability plan exists.
