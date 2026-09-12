@@ -68,25 +68,13 @@ AOSP specifies that devices supporting the standard flashing-unlock model should
 
 No BROM, mtkclient write, seccfg write, preloader patching or fastboot unlock operation has been attempted in this lab.
 
-## 2026-09-12 — Entry 002: DSU infrastructure present, public Settings entry absent
+## 2026-09-12 — Entry 002: DSU infrastructure present
 
 ### Read-only DSU checks
 
-Resolving the public Settings intent:
+An initial probe using `android.settings.DYNAMIC_SYSTEM_UPDATE_SETTINGS` returned no activity. This action is not the AOSP DSU Loader action and therefore is **not** treated as evidence that ColorOS removed DSU Loader. The correct AOSP action is tested in Entry 003 below.
 
-```text
-android.settings.DYNAMIC_SYSTEM_UPDATE_SETTINGS
-```
-
-returned:
-
-```text
-No activity found
-```
-
-Starting the same action explicitly with `am start` also failed because ColorOS exposes no activity for that Settings action.
-
-However, the underlying DSU implementation is present:
+The underlying DSU implementation is present:
 
 ```text
 /system/bin/gsi_tool
@@ -119,7 +107,7 @@ suspended=false
 enabled=0
 ```
 
-`enabled=0` is recorded as the PackageManager default-enabled state, not as evidence that the package is disabled. Further component-specific checks are required before drawing conclusions.
+`enabled=0` is recorded as the PackageManager default-enabled state, not as evidence that the package is disabled.
 
 ### Developer/OEM state
 
@@ -134,34 +122,89 @@ The earlier system property still reported:
 sys.oem_unlock_allowed=0
 ```
 
-The distinction is retained: Developer Options are enabled, but no standard OEM-unlock authorization is currently exposed through these queries.
+Developer Options are enabled, but no standard OEM-unlock authorization is currently exposed through these queries.
 
 ### Storage
 
 `/data` is F2FS and currently has approximately 62 GiB available, so storage capacity is not an immediate blocker for a normal-sized DSU experiment.
 
-### AOSP comparison
-
-AOSP Settings normally declares an exported `com.android.settings.development.DSULoader` activity using the action `android.settings.development.START_DSU_LOADER`. The stock Dynamic System Installation Service also declares an exported `com.android.dynsystem.VerificationActivity` for `android.os.image.action.START_INSTALL`, protected by the privileged `android.permission.INSTALL_DYNAMIC_SYSTEM` permission.
-
-Therefore, the next reversible investigation should first determine whether OPPO retained the explicit Settings `DSULoader` component even though it removed the public `DYNAMIC_SYSTEM_UPDATE_SETTINGS` action.
-
-AOSP documentation also describes the `persist.sys.fflag.override.settings_dynamic_system` feature property. Changing that property is deliberately deferred until its current value and the actual OPPO component layout are inspected.
-
 ### Safety decision
 
 No GSI was downloaded, selected, installed or booted. No persistent system property was changed. No partition or boot-security state was modified.
 
-## Next safe checks
+## 2026-09-12 — Entry 003: Stock AOSP DSU Loader is exposed by ColorOS
 
-Before any destructive action, investigate:
+### Correct DSU Loader action
 
-- whether `com.android.settings.development.DSULoader` exists in the OPPO Settings package;
-- whether the `android.settings.development.START_DSU_LOADER` action resolves;
-- current `settings_dynamic_system` feature-property values;
-- component-level enabled/exported state for DSU Loader and `VerificationActivity`;
-- whether the Settings DSU Loader can be opened without starting an installation;
-- only after those checks, decide whether enabling the documented DSU feature property is justified and reversible.
+Resolving the AOSP DSU Loader action:
+
+```text
+android.settings.development.START_DSU_LOADER
+```
+
+returned:
+
+```text
+com.android.settings/.development.DSULoader
+```
+
+The `com.android.settings` package dump also explicitly lists the exported `DSULoader` component for that action.
+
+This is strong evidence that the OPPO Android 15 build retains the stock-style AOSP DSU Loader front end.
+
+### DSU feature properties
+
+The following queried overrides returned no values:
+
+```text
+persist.sys.fflag.override.settings_dynamic_system
+sys.fflag.override.settings_dynamic_system
+persist.sys.fflag.override.settings_dynamic_system.list
+```
+
+A blank custom-list override is consistent with AOSP DSULoader falling back to its built-in Google GSI metadata URL. No property has been changed.
+
+### Dynamic System installation handler
+
+Resolving:
+
+```text
+android.os.image.action.START_INSTALL
+```
+
+returned:
+
+```text
+com.android.dynsystem/.VerificationActivity
+```
+
+The component accepts `content`, `file`, `http` and `https` URI schemes as well as the non-data form of the install action.
+
+### Interpretation
+
+The verified chain now includes:
+
+- Treble enabled
+- dynamic partitions enabled
+- A/B and Virtual A/B enabled
+- `gsi_tool` present and reporting `normal`
+- `dynamic_system` Binder service present
+- `gsiservice` Binder service present
+- `com.android.settings/.development.DSULoader` resolvable
+- `com.android.dynsystem/.VerificationActivity` resolvable
+- approximately 62 GiB free in `/data`
+
+The bootloader remains locked and AVB remains green. No GSI has been selected or installed.
+
+### Next reversible action
+
+Open the DSU Loader UI only:
+
+```bash
+adb shell am start -a android.settings.development.START_DSU_LOADER
+```
+
+Opening the activity is considered reversible. Do not select a GSI until the offered image metadata has been recorded and checked for architecture, Android version, VNDK/SPL constraints and expected signature behavior on this locked OPPO build.
 
 ## Decision gate
 
