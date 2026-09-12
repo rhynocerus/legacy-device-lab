@@ -241,15 +241,75 @@ The AOSP DSU Loader filters image metadata using, when present:
 - `vndk`, matched against `ro.vndk.version`;
 - `spl`, which must not be older than the device security patch level.
 
-The device is `arm64-v8a` and Android 15, but earlier read-only probes returned no visible value for `ro.vndk.version`. The device security patch level is `2026-07-01`. Either or both may be relevant to why Google's current DSU catalog yields no applicable image, but the precise rejection reason has not yet been established.
+The device is `arm64-v8a` and Android 15, but earlier read-only probes returned no visible value for `ro.vndk.version`. The device security patch level is `2026-07-01`.
 
 ### Safety status
 
 No package was selected. No GSI was downloaded or installed. No persistent property was changed. The bootloader and verified-boot state remain untouched.
 
-### Next diagnostic
+## 2026-09-12 — Entry 005: Logcat identifies security-patch rollback filtering
 
-Capture `DSULOADER` logcat output immediately after opening the loader. AOSP logs each rejected package and records reasons such as CPU mismatch, OS-version mismatch, missing VNDK match or security-patch rollback protection. This should identify the actual filter responsible without modifying the device.
+A cold launch of `DSULoader` was captured with the `DSULOADER` log tag. The loader successfully fetched Google's default GSI metadata and inspected ARM64 and x86-family images from Android 11 through Android 16.
+
+For ARM64 packages, the device architecture matched. Older Android releases were also rejected because their OS version was below the device's Android 15 release. Most importantly, every candidate GSI had a security patch level older than the device's `2026-07-01` SPL.
+
+Examples observed:
+
+```text
+Android 15 GSI SPL: 2025-04-05
+Device SPL:          2026-07-01
+Result:              isSupported false
+```
+
+```text
+Android 16 GSI SPL: 2026-01-05
+Device SPL:          2026-07-01
+Result:              isSupported false
+```
+
+The queried properties were:
+
+```text
+ro.product.cpu.abi=arm64-v8a
+ro.system.build.version.release=15
+ro.vndk.version=<no value returned>
+ro.build.version.security_patch=2026-07-01
+```
+
+No explicit VNDK rejection appeared in the captured log. Therefore the evidence currently supports **SPL anti-rollback filtering as the immediate reason the stock catalog produces zero DSU choices**. The empty VNDK property remains a compatibility question, but is not treated as the demonstrated blocker.
+
+The current Google GSI release page should be checked separately for images newer than those exposed by the stock metadata feed before attempting any manual DSU installation.
+
+## 2026-09-12 — Entry 006: Developer-GSI key visibility check
+
+A read-only filesystem search was performed for public Developer-GSI AVB keys in locations visible from the running Android userspace, including:
+
+```text
+/avb
+/first_stage_ramdisk/avb
+/vendor_ramdisk/avb
+/vendor/etc/avb
+/system/etc/avb
+```
+
+and across `/system`, `/vendor`, `/product`, `/system_ext` and `/odm` for filenames matching Developer-GSI key patterns.
+
+No matching key files were visible. A `/proc/1/root/avb` listing also produced no visible result in the unprivileged ADB shell context.
+
+Boot-security properties remain unchanged:
+
+```text
+ro.boot.avb_version=1.3
+ro.boot.vbmeta.device_state=locked
+ro.boot.verifiedbootstate=green
+ro.boot.flash.locked=1
+```
+
+### Interpretation
+
+AOSP states that OEMs wishing to boot public Developer GSIs while the bootloader remains locked install the relevant GSI public keys into the first-stage ramdisk. Their absence from the running filesystem search **does not prove those keys are absent from the boot images**: the first-stage ramdisk may not be exposed to an ordinary ADB shell after boot, and access through `/proc/1/root` may be restricted.
+
+The next safe step is therefore to determine whether the active `init_boot_b` / `vendor_boot_b` block devices can be read from the unprivileged shell, without writing anything. If they cannot, inspection should move to an official firmware/OTA package or another non-writing acquisition route rather than attempting a BROM or partition-unlock procedure.
 
 ## Decision gate
 
