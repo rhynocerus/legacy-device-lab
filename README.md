@@ -15,6 +15,7 @@ The goal is not only to reach a successful installation. Failed attempts, protoc
 | Case | Device | Goal | Status |
 |---|---|---|---|
 | 001 | Samsung Galaxy Tab E 9.6 SM-T560 (`gtelwifi`) | Repurpose as a Linux lab tablet with postmarketOS | Investigation paused, upstream bug reported |
+| 002 | OPPO CPH2579 (`OP5759L1`) | Evaluate DSU/GSI first, then bootloader/Linux possibilities | Active, read-only investigation |
 
 ### Case 001: Samsung SM-T560
 
@@ -25,6 +26,17 @@ The first case investigates a Samsung Galaxy Tab E 9.6 SM-T560 whose normal Andr
 - Linux/postmarketOS attempt: [`linux-attempt.md`](devices/samsung-sm-t560/linux-attempt.md)
 - Upstream report: [Llucs/odin4#270](https://github.com/Llucs/odin4/issues/270)
 - Odin4 fork used for future experiments: [rhynocerus/odin4](https://github.com/rhynocerus/odin4)
+
+### Case 002: OPPO CPH2579
+
+The second case investigates an Android 15 OPPO CPH2579 with MediaTek hardware. Initial ADB inspection confirms ARM64, Project Treble, dynamic partitions, A/B and Virtual A/B support. The bootloader remains locked and Android Verified Boot is green.
+
+The stock image also contains `com.android.dynsystem`, making a reversible DSU/GSI investigation the preferred next step before any bootloader, preloader or BROM modification.
+
+- Case overview: [`devices/oppo-cph2579/`](devices/oppo-cph2579/)
+- Hardware/software baseline: [`hardware.md`](devices/oppo-cph2579/hardware.md)
+- Investigation log: [`investigation-log.md`](devices/oppo-cph2579/investigation-log.md)
+- Related upstream report: [bkerler/mtkclient#256](https://github.com/bkerler/mtkclient/issues/256)
 
 ## Lab methodology
 
@@ -55,12 +67,16 @@ See [`docs/methodology.md`](docs/methodology.md).
 legacy-device-lab/
 ├── README.md
 ├── devices/
-│   └── samsung-sm-t560/
+│   ├── samsung-sm-t560/
+│   │   ├── README.md
+│   │   ├── hardware.md
+│   │   ├── linux-attempt.md
+│   │   ├── usb-diagnostics.md
+│   │   └── logs/
+│   └── oppo-cph2579/
 │       ├── README.md
 │       ├── hardware.md
-│       ├── linux-attempt.md
-│       ├── usb-diagnostics.md
-│       └── logs/
+│       └── investigation-log.md
 ├── docs/
 │   └── methodology.md
 ├── scripts/
