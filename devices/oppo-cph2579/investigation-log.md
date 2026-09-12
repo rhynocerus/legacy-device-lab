@@ -206,6 +206,51 @@ adb shell am start -a android.settings.development.START_DSU_LOADER
 
 Opening the activity is considered reversible. Do not select a GSI until the offered image metadata has been recorded and checked for architecture, Android version, VNDK/SPL constraints and expected signature behavior on this locked OPPO build.
 
+## 2026-09-12 — Entry 004: DSU Loader opens but offers no compatible image
+
+### USBGuard reconnection note
+
+After a USB reconnect, the phone enumerated under a different OPPO USB product ID and USBGuard blocked the newly exposed configuration. ADB therefore showed no connected device until the corresponding USBGuard device entry was explicitly allowed. The unique device serial is intentionally omitted from this repository.
+
+After authorization, `adb devices` again reported the phone as `device`.
+
+### DSU Loader result
+
+Launching:
+
+```bash
+adb shell am start -a android.settings.development.START_DSU_LOADER
+```
+
+successfully opened the stock DSU Loader UI. The phone displayed:
+
+```text
+Select DSU Package
+
+No DSU available for this device.
+```
+
+This is not a network-error or metadata-error result. AOSP `DSULoader` displays this exact fallback string when it successfully processes the configured DSU metadata but its compatibility filtering leaves the package list empty.
+
+### Relevant compatibility observations
+
+The AOSP DSU Loader filters image metadata using, when present:
+
+- `cpu_abi`, compared with `ro.product.cpu.abi`;
+- `os_version`, which must not be older than the device system release;
+- `vndk`, matched against `ro.vndk.version`;
+- `spl`, which must not be older than the device security patch level.
+
+The device is `arm64-v8a` and Android 15, but earlier read-only probes returned no visible value for `ro.vndk.version`. The device security patch level is `2026-07-01`. Either or both may be relevant to why Google's current DSU catalog yields no applicable image, but the precise rejection reason has not yet been established.
+
+### Safety status
+
+No package was selected. No GSI was downloaded or installed. No persistent property was changed. The bootloader and verified-boot state remain untouched.
+
+### Next diagnostic
+
+Capture `DSULOADER` logcat output immediately after opening the loader. AOSP logs each rejected package and records reasons such as CPU mismatch, OS-version mismatch, missing VNDK match or security-patch rollback protection. This should identify the actual filter responsible without modifying the device.
+
 ## Decision gate
 
 Do not proceed to bootloader/preloader modification until the DSU path has been exhausted and a recoverability plan exists.
